@@ -91,6 +91,32 @@ public class LaunchClassLoader extends URLClassLoader implements ClassNodeSource
 		throw new ClassNotFoundException(name);
 	}
 
+	static final String mcSrc = "net.minecraft.src.";
+
+	@Override
+	protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+		String mcSrcName = name;
+		if(name.startsWith(mcSrc)) {
+			name = name.substring(mcSrc.length());
+		}else{
+			mcSrcName = mcSrc+name;
+		}
+		synchronized (getClassLoadingLock(name)) {
+			Class<?> c = findLoadedClass(name);
+			if(c != null){
+				if (resolve) {
+					resolveClass(c);
+				}
+				return c;
+			}
+		}
+		try {
+			return super.loadClass(mcSrcName, resolve);
+		}catch(Throwable ignored){
+			return super.loadClass(name, resolve);
+		}
+	}
+
 	public void invokeMain(String launchTarget, String... args) {
 		classNodeCache.clear();
 		try {
